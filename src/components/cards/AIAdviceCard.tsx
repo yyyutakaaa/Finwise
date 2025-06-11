@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ export default function AIAdviceCard() {
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState("");
   const [showQuestionForm, setShowQuestionForm] = useState(false);
+  const [hasLoadedAdvice, setHasLoadedAdvice] = useState(false); // Track if we've loaded advice
 
   // Get user's financial data
   const getFinancialData =
@@ -74,6 +75,7 @@ export default function AIAdviceCard() {
       const result = await response.json();
       if (result.advice) {
         setAdvice(result.advice);
+        setHasLoadedAdvice(true);
       } else {
         setAdvice("Unable to generate advice at this time.");
       }
@@ -108,6 +110,7 @@ export default function AIAdviceCard() {
         setAdvice(result.advice);
         setQuestion("");
         setShowQuestionForm(false);
+        setHasLoadedAdvice(true);
       } else {
         setAdvice("Unable to process your question.");
       }
@@ -119,12 +122,12 @@ export default function AIAdviceCard() {
     }
   };
 
-  // Auto-load advice when component mounts
-  useEffect(() => {
-    if (user) {
-      getGeneralAdvice();
-    }
-  }, [user, getGeneralAdvice]);
+  // ❌ REMOVED: Auto-load useEffect - no more automatic API calls!
+  // useEffect(() => {
+  //   if (user) {
+  //     getGeneralAdvice();
+  //   }
+  // }, [user, getGeneralAdvice]);
 
   if (showQuestionForm) {
     return (
@@ -187,8 +190,15 @@ export default function AIAdviceCard() {
             </div>
           ) : (
             <div className="text-sm text-slate-700 leading-relaxed">
-              {advice ||
-                'Click "Get Analysis" to receive personalized financial advice based on your data.'}
+              {advice || (
+                <div className="text-center py-6 text-slate-500">
+                  <div className="mb-2">💡</div>
+                  <div>Ready to analyze your finances!</div>
+                  <div className="text-xs mt-1">
+                    Click "Get Analysis" to receive personalized AI advice
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -200,7 +210,11 @@ export default function AIAdviceCard() {
               disabled={loading}
               className="flex-1"
             >
-              {loading ? "Analyzing..." : "Refresh Analysis"}
+              {loading
+                ? "Analyzing..."
+                : hasLoadedAdvice
+                ? "Refresh Analysis"
+                : "Get Analysis"}
             </Button>
             <Button
               size="sm"
