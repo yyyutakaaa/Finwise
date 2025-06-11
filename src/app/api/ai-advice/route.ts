@@ -1,28 +1,34 @@
+// src/app/auth/callback/route.ts
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { getFinancialAdvice, askFinancialQuestion, type FinancialData } from '@/lib/openai'
 
-export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json()
-        const { type, data, question } = body
+export async function GET(request: NextRequest) {
+    const { searchParams, origin } = new URL(request.url)
+    const code = searchParams.get('code')
+    const next = searchParams.get('next') ?? '/dashboard'
 
-        if (!data) {
-            return NextResponse.json({ error: 'Financial data is required' }, { status: 400 })
+    if (code) {
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (!error) {
+            const forwardedHost = request.headers.get('x-forwarded-host')
+            const isLocalEnv = process.env.NODE_ENV === 'development'
+
+            if (isLocalEnv) {
+                return NextResponse.redirect(`${origin}${next}`)
+            } else if (forwardedHost) {
+                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+            } else {
+                return NextResponse.redirect(`${origin}${next}`)
+            }
         }
-
-        let advice: string
-
-        if (type === 'general') {
-            advice = await getFinancialAdvice(data as FinancialData)
-        } else if (type === 'question' && question) {
-            advice = await askFinancialQuestion(question, data as FinancialData)
-        } else {
-            return NextResponse.json({ error: 'Invalid request type' }, { status: 400 })
-        }
-
-        return NextResponse.json({ advice })
-    } catch (error) {
-        console.error('AI Advice API Error:', error)
-        return NextResponse.json({ error: 'Failed to generate advice' }, { status: 500 })
     }
+
+    // Return the user to an error page with some instructions
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
