@@ -35,8 +35,12 @@ export async function updateCashBalance(userId: string, amount: number) {
     return data
 }
 
-// Expense calculation helper (moved from expense-helpers)
-export function calculateMonthlyExpenses(expenses: any[]) {
+// Expense calculation helper (fixed any type)
+export function calculateMonthlyExpenses(expenses: Array<{
+    amount: number
+    type: 'fixed' | 'variable'
+    date: string
+}>) {
     const currentMonth = new Date().getMonth()
     const currentYear = new Date().getFullYear()
 
