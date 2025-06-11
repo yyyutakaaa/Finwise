@@ -17,14 +17,25 @@ export default function CashBalanceCard() {
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadBalance = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
-    const data = await getCashBalance(user.id);
-    setBalance(data?.amount || 0);
-    setLoading(false);
+    setError(null);
+
+    try {
+      console.log("Loading balance for user:", user.id);
+      const data = await getCashBalance(user.id);
+      console.log("Balance data received:", data);
+      setBalance(data?.amount || 0);
+    } catch (err) {
+      console.error("Error loading balance:", err);
+      setError("Failed to load balance");
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -39,11 +50,24 @@ export default function CashBalanceCard() {
     const newBalance = prompt("Enter your current cash balance (€):");
     if (newBalance && !isNaN(parseFloat(newBalance))) {
       setUpdating(true);
-      const result = await updateCashBalance(user.id, parseFloat(newBalance));
-      if (result) {
-        await loadBalance(); // Reload from database
+      setError(null);
+
+      try {
+        console.log("Updating balance to:", parseFloat(newBalance));
+        const result = await updateCashBalance(user.id, parseFloat(newBalance));
+        console.log("Update result:", result);
+
+        if (result) {
+          await loadBalance(); // Reload from database
+        } else {
+          setError("Failed to update balance");
+        }
+      } catch (err) {
+        console.error("Error updating balance:", err);
+        setError("Failed to update balance");
+      } finally {
+        setUpdating(false);
       }
-      setUpdating(false);
     }
   };
 
@@ -68,15 +92,22 @@ export default function CashBalanceCard() {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Cash Balance</CardTitle>
-        <CardDescription>Your current available funds</CardDescription>
+        <CardDescription>
+          Your current available funds • Synced to database
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-green-600">
           €{balance.toFixed(2)}
         </div>
-        <p className="text-sm text-slate-600 mt-2 mb-4">
-          Available to spend • Synced across devices
-        </p>
+        <p className="text-sm text-slate-600 mt-2 mb-4">Available to spend</p>
+
+        {error && (
+          <div className="text-red-600 text-sm mb-3 bg-red-50 p-2 rounded">
+            {error}
+          </div>
+        )}
+
         <Button
           variant="outline"
           size="sm"
