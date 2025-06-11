@@ -27,12 +27,11 @@ export const signIn = async (email: string, password: string) => {
   return { data, error }
 }
 
-// ✅ FIXED: Google OAuth sign in with correct redirectTo
 export const signInWithGoogle = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo: `${window.location.origin}/dashboard`  // ← Direct naar dashboard!
     }
   })
   return { data, error }
