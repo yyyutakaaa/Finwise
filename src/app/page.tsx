@@ -1,37 +1,36 @@
-"use client";
+import AuthGuard from "@/components/layout/AuthGuard";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import CashBalanceCard from "@/components/cards/CashBalanceCard";
+import ExpenseCard from "@/components/cards/ExpenseCard";
+import AIAdviceCard from "@/components/cards/AIAdviceCard";
+import BankImportCard from "@/components/cards/BankImportCard";
+import AIPDFReaderCard from "@/components/cards/AIPDFReaderCard";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-
-export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session) {
-        // User is logged in, go to dashboard
-        router.push("/dashboard");
-      } else {
-        // User is not logged in, go to login
-        router.push("/login");
-      }
-    };
-
-    checkAuthAndRedirect();
-  }, [router]);
-
+export default function DashboardPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-slate-900 mb-4">Finwise</h1>
-        <p className="text-slate-600">Loading your financial dashboard...</p>
-        <div className="animate-spin h-8 w-8 border-2 border-slate-300 border-t-slate-600 rounded-full mx-auto mt-4"></div>
-      </div>
-    </div>
+    <AuthGuard>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-600">Welcome back to Finwise</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CashBalanceCard />
+            <ExpenseCard />
+            <AIAdviceCard />
+          </div>
+          <div className="mt-6">
+            <AIPDFReaderCard />
+          </div>
+
+          {/* ✅ Add Bank Import Card */}
+          <div className="mt-6">
+            <BankImportCard />
+          </div>
+        </div>
+      </DashboardLayout>
+    </AuthGuard>
   );
 }
