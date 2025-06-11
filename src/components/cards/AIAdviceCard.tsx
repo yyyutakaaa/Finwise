@@ -195,7 +195,7 @@ export default function AIAdviceCard() {
                   <div className="mb-2">💡</div>
                   <div>Ready to analyze your finances!</div>
                   <div className="text-xs mt-1">
-                    Click "Get Analysis" to receive personalized AI advice
+                    Click &quot;Get Analysis&quot; to receive personalized AI advice
                   </div>
                 </div>
               )}
@@ -210,11 +210,7 @@ export default function AIAdviceCard() {
               disabled={loading}
               className="flex-1"
             >
-              {loading
-                ? "Analyzing..."
-                : hasLoadedAdvice
-                ? "Refresh Analysis"
-                : "Get Analysis"}
+              {loading ? "Analyzing..." : hasLoadedAdvice ? "Refresh Analysis" : "Get Analysis"}
             </Button>
             <Button
               size="sm"
