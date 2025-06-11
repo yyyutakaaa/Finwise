@@ -3,7 +3,6 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CashBalanceCard from "@/components/cards/CashBalanceCard";
 import ExpenseCard from "@/components/cards/ExpenseCard";
 import AIAdviceCard from "@/components/cards/AIAdviceCard";
-import SimplifiedAIPDFReaderCard from "@/components/cards/SimplifiedAIPDFReaderCard";
 
 export default function DashboardPage() {
   return (
