@@ -10,20 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-
-export async function getCashBalance(
-  userId: string
-): Promise<{ amount: number }> {
-  const storedBalance = localStorage.getItem(`cash-balance-${userId}`);
-  return { amount: storedBalance ? parseFloat(storedBalance) : 0 };
-}
-
-export async function updateCashBalance(
-  userId: string,
-  amount: number
-): Promise<void> {
-  localStorage.setItem(`cash-balance-${userId}`, amount.toString());
-}
+import { getCashBalance, updateCashBalance } from "@/lib/finance-helpers";
 
 export default function CashBalanceCard() {
   const { user } = useAuth();
@@ -52,8 +39,10 @@ export default function CashBalanceCard() {
     const newBalance = prompt("Enter your current cash balance (€):");
     if (newBalance && !isNaN(parseFloat(newBalance))) {
       setUpdating(true);
-      await updateCashBalance(user.id, parseFloat(newBalance));
-      await loadBalance();
+      const result = await updateCashBalance(user.id, parseFloat(newBalance));
+      if (result) {
+        await loadBalance(); // Reload from database
+      }
       setUpdating(false);
     }
   };
@@ -85,7 +74,9 @@ export default function CashBalanceCard() {
         <div className="text-3xl font-bold text-green-600">
           €{balance.toFixed(2)}
         </div>
-        <p className="text-sm text-slate-600 mt-2 mb-4">Available to spend</p>
+        <p className="text-sm text-slate-600 mt-2 mb-4">
+          Available to spend • Synced across devices
+        </p>
         <Button
           variant="outline"
           size="sm"

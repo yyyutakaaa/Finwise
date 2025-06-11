@@ -11,7 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { getExpenses, calculateMonthlyExpenses } from "@/lib/expense-helpers";
+import { getExpenses } from "@/lib/expense-helpers";
+import {
+  calculateMonthlyExpenses,
+  getCashBalance,
+} from "@/lib/finance-helpers";
 
 interface FinancialData {
   cashBalance: number;
@@ -36,24 +40,24 @@ export default function AIAdviceCard() {
   const [showQuestionForm, setShowQuestionForm] = useState(false);
 
   // Get user's financial data
-  const getFinancialData = useCallback((): FinancialData | null => {
-    if (!user) return null;
+  const getFinancialData =
+    useCallback(async (): Promise<FinancialData | null> => {
+      if (!user) return null;
 
-    const expenses = getExpenses(user.id);
-    const monthlyExpenses = calculateMonthlyExpenses(expenses);
-    const cashBalance = parseFloat(
-      localStorage.getItem(`cash-balance-${user.id}`) || "0"
-    );
+      const expenses = await getExpenses(user.id);
+      const monthlyExpenses = calculateMonthlyExpenses(expenses);
+      const balanceData = await getCashBalance(user.id);
+      const cashBalance = balanceData?.amount || 0;
 
-    return {
-      cashBalance,
-      monthlyExpenses,
-      expenses: expenses.slice(0, 10), // Last 10 expenses
-    };
-  }, [user]);
+      return {
+        cashBalance,
+        monthlyExpenses,
+        expenses: expenses.slice(0, 10), // Last 10 expenses
+      };
+    }, [user]);
 
   const getGeneralAdvice = useCallback(async () => {
-    const financialData = getFinancialData();
+    const financialData = await getFinancialData();
     if (!financialData) return;
 
     setLoading(true);
@@ -84,7 +88,7 @@ export default function AIAdviceCard() {
   const askQuestion = async () => {
     if (!question.trim()) return;
 
-    const financialData = getFinancialData();
+    const financialData = await getFinancialData();
     if (!financialData) return;
 
     setLoading(true);

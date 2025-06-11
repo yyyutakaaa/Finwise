@@ -1,64 +1,73 @@
+import { supabase } from "./supabase"
+
 export interface Expense {
   id: string
   amount: number
   description: string
-  type: 'fixed' | 'variable'
+  type: "fixed" | "variable"
   date: string
 }
 
-export function getExpenses(userId: string): Expense[] {
-  if (typeof window === 'undefined') return []
-  const stored = localStorage.getItem(`expenses-${userId}`)
-  return stored ? JSON.parse(stored) : []
-}
+export async function getExpenses(userId: string): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("*")
+    .eq("user_id", userId)
+    .order("date", { ascending: false })
 
-export function addExpense(userId: string, expense: Omit<Expense, 'id'>): void {
-  if (typeof window === 'undefined') return
-  const expenses = getExpenses(userId)
-  const newExpense = {
-    ...expense,
-    id: Date.now().toString(),
-    date: new Date().toISOString()
+  if (error) {
+    console.error("Error fetching expenses:", error)
+    return []
   }
-  expenses.push(newExpense)
-  localStorage.setItem(`expenses-${userId}`, JSON.stringify(expenses))
+
+  return data || []
 }
 
-export function updateExpense(userId: string, expenseId: string, updates: Partial<Omit<Expense, 'id'>>): void {
-  if (typeof window === 'undefined') return
-  const expenses = getExpenses(userId)
-  const index = expenses.findIndex(expense => expense.id === expenseId)
+export async function addExpense(userId: string, expense: Omit<Expense, "id">): Promise<boolean> {
+  const { error } = await supabase
+    .from("expenses")
+    .insert({
+      user_id: userId,
+      amount: expense.amount,
+      description: expense.description,
+      type: expense.type,
+      date: expense.date || new Date().toISOString()
+    })
 
-  if (index !== -1) {
-    expenses[index] = { ...expenses[index], ...updates }
-    localStorage.setItem(`expenses-${userId}`, JSON.stringify(expenses))
+  if (error) {
+    console.error("Error adding expense:", error)
+    return false
   }
+
+  return true
 }
 
-export function deleteExpense(userId: string, expenseId: string): void {
-  if (typeof window === 'undefined') return
-  const expenses = getExpenses(userId)
-  const filteredExpenses = expenses.filter(expense => expense.id !== expenseId)
-  localStorage.setItem(`expenses-${userId}`, JSON.stringify(filteredExpenses))
+export async function updateExpense(userId: string, expenseId: string, updates: Partial<Omit<Expense, "id">>): Promise<boolean> {
+  const { error } = await supabase
+    .from("expenses")
+    .update(updates)
+    .eq("id", expenseId)
+    .eq("user_id", userId)
+
+  if (error) {
+    console.error("Error updating expense:", error)
+    return false
+  }
+
+  return true
 }
 
-export function calculateMonthlyExpenses(expenses: Expense[]) {
-  const currentMonth = new Date().getMonth()
-  const currentYear = new Date().getFullYear()
+export async function deleteExpense(userId: string, expenseId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("id", expenseId)
+    .eq("user_id", userId)
 
-  const monthlyExpenses = expenses.filter(expense => {
-    const expenseDate = new Date(expense.date)
-    return expenseDate.getMonth() === currentMonth &&
-      expenseDate.getFullYear() === currentYear
-  })
+  if (error) {
+    console.error("Error deleting expense:", error)
+    return false
+  }
 
-  const total = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const fixed = monthlyExpenses
-    .filter(expense => expense.type === 'fixed')
-    .reduce((sum, expense) => sum + expense.amount, 0)
-  const variable = monthlyExpenses
-    .filter(expense => expense.type === 'variable')
-    .reduce((sum, expense) => sum + expense.amount, 0)
-
-  return { total, fixed, variable }
+  return true
 }
