@@ -17,6 +17,7 @@ import {
   addExpense,
   updateExpense,
   deleteExpense,
+  manualCleanupVariableExpenses,
   type Expense,
 } from "@/lib/expense-helpers";
 import { calculateMonthlyExpenses } from "@/lib/finance-helpers";
@@ -26,7 +27,9 @@ export default function ExpenseCard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -36,7 +39,7 @@ export default function ExpenseCard() {
   const loadExpenses = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const userExpenses = await getExpenses(user.id);
+    const userExpenses = await getExpenses(user.id); // This automatically cleans up old variable expenses
     setExpenses(userExpenses);
     setLoading(false);
   }, [user]);
@@ -99,6 +102,27 @@ export default function ExpenseCard() {
     }
   };
 
+// 🆕 NEW: Manual cleanup function
+  const handleManualCleanup = async () => {
+    if (!user) return;
+    
+    const confirmed = confirm(
+      "This will delete all variable expenses from previous months. Fixed expenses (like rent) will remain. Are you sure?"
+    );
+    
+    if (confirmed) {
+      setCleanupLoading(true);
+      try {
+        const deletedCount = await manualCleanupVariableExpenses(user.id);
+        alert(`✅ Cleaned up ${deletedCount} old variable expenses!`);
+        await loadExpenses(); // Refresh the list
+      } catch {
+        alert("❌ Error during cleanup. Please try again.");
+      } finally {
+        setCleanupLoading(false);
+      }
+    }
+  };
   const handleCancel = () => {
     setShowAddForm(false);
     setEditingExpense(null);
@@ -133,6 +157,117 @@ export default function ExpenseCard() {
 
   const { total, fixed, variable } = calculateMonthlyExpenses(expenses);
 
+  // Show expanded expense list
+  if (showAllExpenses) {
+    return (
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center justify-between">
+            All Expenses
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualCleanup}
+                disabled={cleanupLoading}
+                className="text-red-600 hover:bg-red-50"
+              >
+                {cleanupLoading ? "Cleaning..." : "🗑️ Cleanup Old"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllExpenses(false)}
+              >
+                Show Summary
+              </Button>
+            </div>
+          </CardTitle>
+          <CardDescription>
+            Complete list of your expenses • {expenses.length} total
+            <div className="text-xs mt-1 text-green-600">
+              💡 Variable expenses are automatically cleaned at month start
+            </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {expenses.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <div className="text-4xl mb-2">💸</div>
+                <div>No expenses yet</div>
+                <div className="text-sm">Add your first expense to get started</div>
+              </div>
+            ) : (
+              expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-slate-900 mb-1">
+                      {expense.description}
+                    </div>
+                    <div className="text-sm text-slate-500 flex items-center space-x-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        expense.type === 'fixed' 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {expense.type === 'fixed' ? '🏠 Fixed' : '📊 Variable'}
+                      </span>
+                      <span>
+                        {new Date(expense.date).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="font-bold text-lg text-slate-900">
+                      €{expense.amount.toFixed(2)}
+                    </span>
+                    <div className="flex space-x-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(expense)}
+                        className="h-8 w-8 p-0"
+                      >
+                        ✏️
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(expense.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                      >
+                        🗑️
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="mt-6 pt-4 border-t">
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => setShowAddForm(true)}
+            >
+              Add New Expense
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show add form
   if (showAddForm) {
     return (
       <Card>
@@ -140,7 +275,14 @@ export default function ExpenseCard() {
           <CardTitle className="text-lg">
             {editingExpense ? "Edit Expense" : "Add Expense"}
           </CardTitle>
-          <CardDescription>Track your spending</CardDescription>
+          <CardDescription>
+            Track your spending
+            {formData.type === 'variable' && (
+              <div className="text-xs mt-1 text-green-600">
+                💡 Variable expenses reset each month
+              </div>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -180,9 +322,9 @@ export default function ExpenseCard() {
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
               >
                 <option value="variable">
-                  Variable (groceries, entertainment)
+                  📊 Variable (groceries, entertainment) - Resets monthly
                 </option>
-                <option value="fixed">Fixed (rent, subscriptions)</option>
+                <option value="fixed">🏠 Fixed (rent, subscriptions) - Permanent</option>
               </select>
             </div>
 
@@ -200,12 +342,16 @@ export default function ExpenseCard() {
     );
   }
 
+  // Show summary view (default)
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Monthly Expenses</CardTitle>
         <CardDescription>
-          Your spending this month • Synced to database
+          Your spending this month • Auto-cleanup enabled
+          <div className="text-xs mt-1 text-green-600">
+            💡 Variable expenses reset automatically each month
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -214,22 +360,32 @@ export default function ExpenseCard() {
         </div>
         <div className="mt-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">Fixed:</span>
+            <span className="text-slate-600">🏠 Fixed:</span>
             <span className="font-medium">€{fixed.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">Variable:</span>
+            <span className="text-slate-600">📊 Variable:</span>
             <span className="font-medium">€{variable.toFixed(2)}</span>
           </div>
         </div>
 
         {expenses.length > 0 && (
           <div className="mt-4 pt-4 border-t">
-            <h4 className="text-sm font-medium text-slate-700 mb-2">
-              Recent Expenses
-            </h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-slate-700">
+                Recent Expenses
+              </h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllExpenses(true)}
+                className="text-xs h-6"
+              >
+                View All ({expenses.length})
+              </Button>
+            </div>
             <div className="space-y-2 max-h-32 overflow-y-auto">
-              {expenses.slice(0, 5).map((expense) => (
+              {expenses.slice(0, 3).map((expense) => (
                 <div
                   key={expense.id}
                   className="flex items-center justify-between text-xs bg-slate-50 p-2 rounded"
@@ -239,7 +395,7 @@ export default function ExpenseCard() {
                       {expense.description}
                     </div>
                     <div className="text-slate-500">
-                      {expense.type} •{" "}
+                      {expense.type === 'fixed' ? '🏠' : '📊'} {expense.type} •{" "}
                       {new Date(expense.date).toLocaleDateString()}
                     </div>
                   </div>
