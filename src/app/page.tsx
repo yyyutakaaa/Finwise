@@ -21,14 +21,6 @@ export default function DashboardPage() {
             <ExpenseCard />
             <AIAdviceCard />
           </div>
-          <div className="mt-6">
-            <AIPDFReaderCard />
-          </div>
-
-          {/* ✅ Add Bank Import Card */}
-          <div className="mt-6">
-            <BankImportCard />
-          </div>
         </div>
       </DashboardLayout>
     </AuthGuard>

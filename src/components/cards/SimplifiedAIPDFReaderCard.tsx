@@ -188,5 +188,4 @@ Categories: groceries, transport, salary, dining, shopping, entertainment, utili
     setManualText('');
   };
 
-
 }
