@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -36,7 +36,7 @@ export default function AIAdviceCard() {
   const [showQuestionForm, setShowQuestionForm] = useState(false);
 
   // Get user's financial data
-  const getFinancialData = (): FinancialData | null => {
+  const getFinancialData = useCallback((): FinancialData | null => {
     if (!user) return null;
 
     const expenses = getExpenses(user.id);
@@ -50,9 +50,9 @@ export default function AIAdviceCard() {
       monthlyExpenses,
       expenses: expenses.slice(0, 10), // Last 10 expenses
     };
-  };
+  }, [user]);
 
-  const getGeneralAdvice = async () => {
+  const getGeneralAdvice = useCallback(async () => {
     const financialData = getFinancialData();
     if (!financialData) return;
 
@@ -79,7 +79,7 @@ export default function AIAdviceCard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getFinancialData]);
 
   const askQuestion = async () => {
     if (!question.trim()) return;
@@ -120,7 +120,7 @@ export default function AIAdviceCard() {
     if (user) {
       getGeneralAdvice();
     }
-  }, [user]);
+  }, [user, getGeneralAdvice]);
 
   if (showQuestionForm) {
     return (
@@ -140,8 +140,8 @@ export default function AIAdviceCard() {
                 onKeyPress={(e) => e.key === "Enter" && askQuestion()}
               />
               <div className="text-xs text-slate-500 mb-3">
-                Try asking: "Can I afford X?", "How can I save more?", "Should I
-                increase my budget?"
+                Try asking: &quot;Can I afford X?&quot;, &quot;How can I save
+                more?&quot;, &quot;Should I increase my budget?&quot;
               </div>
             </div>
 

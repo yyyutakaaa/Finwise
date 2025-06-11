@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+
 export async function getCashBalance(
   userId: string
 ): Promise<{ amount: number }> {
@@ -30,20 +31,20 @@ export default function CashBalanceCard() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadBalance();
-    }
-  }, [user]);
-
-  const loadBalance = async () => {
+  const loadBalance = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
     const data = await getCashBalance(user.id);
     setBalance(data?.amount || 0);
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadBalance();
+    }
+  }, [user, loadBalance]);
 
   const handleSetBalance = async () => {
     if (!user) return;

@@ -56,7 +56,7 @@ export default function RegisterForm() {
         // Direct redirect zonder timeout
         router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
