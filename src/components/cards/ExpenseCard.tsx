@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Trash2, Info, Pencil, Wallet, Home, PieChart, Trash } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getExpenses,
@@ -170,9 +171,10 @@ export default function ExpenseCard() {
                 size="sm"
                 onClick={handleManualCleanup}
                 disabled={cleanupLoading}
-                className="text-red-600 hover:bg-red-50"
+                className="text-red-600 hover:bg-red-50 gap-2"
               >
-                {cleanupLoading ? "Cleaning..." : "🗑️ Cleanup Old"}
+                <Trash2 className="h-4 w-4" />
+                {cleanupLoading ? "Cleaning..." : "Cleanup Old"}
               </Button>
               <Button
                 variant="outline"
@@ -185,8 +187,8 @@ export default function ExpenseCard() {
           </CardTitle>
           <CardDescription>
             Complete list of your expenses • {expenses.length} total
-            <div className="text-xs mt-1 text-green-600">
-              💡 Variable expenses are automatically cleaned at month start
+            <div className="text-xs mt-1 text-green-600 flex items-center gap-1">
+              <Info className="h-3 w-3" /> Variable expenses are automatically cleaned at month start
             </div>
           </CardDescription>
         </CardHeader>
@@ -194,7 +196,9 @@ export default function ExpenseCard() {
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {expenses.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
-                <div className="text-4xl mb-2">💸</div>
+                <div className="flex justify-center mb-2">
+                  <Wallet className="h-10 w-10 text-slate-400" />
+                </div>
                 <div>No expenses yet</div>
                 <div className="text-sm">Add your first expense to get started</div>
               </div>
@@ -209,12 +213,13 @@ export default function ExpenseCard() {
                       {expense.description}
                     </div>
                     <div className="text-sm text-slate-500 flex items-center space-x-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
                         expense.type === 'fixed' 
                           ? 'bg-blue-100 text-blue-700' 
                           : 'bg-green-100 text-green-700'
                       }`}>
-                        {expense.type === 'fixed' ? '🏠 Fixed' : '📊 Variable'}
+                        {expense.type === 'fixed' ? <Home className="h-3 w-3" /> : <PieChart className="h-3 w-3" />}
+                        {expense.type === 'fixed' ? 'Fixed' : 'Variable'}
                       </span>
                       <span>
                         {new Date(expense.date).toLocaleDateString('en-GB', {
@@ -236,7 +241,7 @@ export default function ExpenseCard() {
                         onClick={() => handleEdit(expense)}
                         className="h-8 w-8 p-0"
                       >
-                        ✏️
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
@@ -244,7 +249,7 @@ export default function ExpenseCard() {
                         onClick={() => handleDelete(expense.id)}
                         className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                       >
-                        🗑️
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -278,8 +283,8 @@ export default function ExpenseCard() {
           <CardDescription>
             Track your spending
             {formData.type === 'variable' && (
-              <div className="text-xs mt-1 text-green-600">
-                💡 Variable expenses reset each month
+              <div className="text-xs mt-1 text-green-600 flex items-center gap-1">
+                <Info className="h-3 w-3" /> Variable expenses reset each month
               </div>
             )}
           </CardDescription>
@@ -322,9 +327,9 @@ export default function ExpenseCard() {
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
               >
                 <option value="variable">
-                  📊 Variable (groceries, entertainment) - Resets monthly
+                  Variable (groceries, entertainment) - Resets monthly
                 </option>
-                <option value="fixed">🏠 Fixed (rent, subscriptions) - Permanent</option>
+                <option value="fixed">Fixed (rent, subscriptions) - Permanent</option>
               </select>
             </div>
 
@@ -349,8 +354,8 @@ export default function ExpenseCard() {
         <CardTitle className="text-lg">Monthly Expenses</CardTitle>
         <CardDescription>
           Your spending this month • Auto-cleanup enabled
-          <div className="text-xs mt-1 text-green-600">
-            💡 Variable expenses reset automatically each month
+          <div className="text-xs mt-1 text-green-600 flex items-center gap-1">
+            <Info className="h-3 w-3" /> Variable expenses reset automatically each month
           </div>
         </CardDescription>
       </CardHeader>
@@ -360,11 +365,11 @@ export default function ExpenseCard() {
         </div>
         <div className="mt-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">🏠 Fixed:</span>
+            <span className="text-slate-600 flex items-center gap-1"><Home className="h-3 w-3" /> Fixed:</span>
             <span className="font-medium">€{fixed.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">📊 Variable:</span>
+            <span className="text-slate-600 flex items-center gap-1"><PieChart className="h-3 w-3" /> Variable:</span>
             <span className="font-medium">€{variable.toFixed(2)}</span>
           </div>
         </div>
@@ -394,8 +399,8 @@ export default function ExpenseCard() {
                     <div className="font-medium truncate">
                       {expense.description}
                     </div>
-                    <div className="text-slate-500">
-                      {expense.type === 'fixed' ? '🏠' : '📊'} {expense.type} •{" "}
+                    <div className="text-slate-500 flex items-center gap-1">
+                      {expense.type === 'fixed' ? <Home className="h-3 w-3" /> : <PieChart className="h-3 w-3" />} {expense.type} •{" "}
                       {new Date(expense.date).toLocaleDateString()}
                     </div>
                   </div>
@@ -409,7 +414,7 @@ export default function ExpenseCard() {
                       onClick={() => handleEdit(expense)}
                       className="h-6 w-6 p-0"
                     >
-                      ✏️
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
@@ -417,7 +422,7 @@ export default function ExpenseCard() {
                       onClick={() => handleDelete(expense.id)}
                       className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
                     >
-                      🗑️
+                      <Trash className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

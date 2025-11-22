@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 
@@ -129,7 +130,7 @@ export default function SettingsForm() {
 
   const handleDeleteAccount = async () => {
     const confirmed = confirm(
-      "⚠️ Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete all your data including expenses, cash balance, and AI advice history."
+      "Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete all your data including expenses, cash balance, and AI advice history."
     );
 
     if (!confirmed) return;
@@ -278,8 +279,9 @@ export default function SettingsForm() {
             <Button 
               variant="outline" 
               onClick={() => router.push('/dashboard')}
+              className="gap-2"
             >
-              ← Back to Dashboard
+              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
             </Button>
           </div>
         </CardContent>

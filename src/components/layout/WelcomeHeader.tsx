@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function WelcomeHeader() {
@@ -31,7 +32,7 @@ export default function WelcomeHeader() {
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">
-          {getGreeting()}, {getUserName()}! 👋
+          {getGreeting()}, {getUserName()}!
         </h1>
         <p className="text-slate-600 mt-1">
           Here&apos;s your financial overview for today
@@ -43,7 +44,7 @@ export default function WelcomeHeader() {
         onClick={() => router.push('/settings')}
         className="flex items-center space-x-2"
       >
-        <span>⚙️</span>
+        <Settings className="h-4 w-4" />
         <span>Settings</span>
       </Button>
     </div>
