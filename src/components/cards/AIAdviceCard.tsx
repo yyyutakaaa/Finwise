@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -11,11 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import { getExpenses } from "@/lib/expense-helpers";
 import {
   calculateMonthlyExpenses,
   getCashBalance,
 } from "@/lib/finance-helpers";
+import { Lock } from "lucide-react";
 
 interface FinancialData {
   cashBalance: number;
@@ -39,6 +42,22 @@ export default function AIAdviceCard() {
   const [question, setQuestion] = useState("");
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [hasLoadedAdvice, setHasLoadedAdvice] = useState(false); // Track if we've loaded advice
+  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAiStatus = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_settings')
+        .select('ai_opt_in')
+        .eq('user_id', user.id)
+        .single();
+
+      setAiEnabled(!!data?.ai_opt_in);
+    };
+
+    checkAiStatus();
+  }, [user]);
 
   // Get user's financial data
   const getFinancialData =
@@ -71,6 +90,12 @@ export default function AIAdviceCard() {
           data: financialData,
         }),
       });
+
+      if (response.status === 403) {
+        setAdvice("AI features are disabled in settings.");
+        setAiEnabled(false);
+        return;
+      }
 
       const result = await response.json();
       if (result.advice) {
@@ -105,6 +130,12 @@ export default function AIAdviceCard() {
         }),
       });
 
+      if (response.status === 403) {
+        setAdvice("AI features are disabled in settings.");
+        setAiEnabled(false);
+        return;
+      }
+
       const result = await response.json();
       if (result.advice) {
         setAdvice(result.advice);
@@ -122,12 +153,27 @@ export default function AIAdviceCard() {
     }
   };
 
-  // ❌ REMOVED: Auto-load useEffect - no more automatic API calls!
-  // useEffect(() => {
-  //   if (user) {
-  //     getGeneralAdvice();
-  //   }
-  // }, [user, getGeneralAdvice]);
+  // If AI is disabled, show a placeholder
+  if (aiEnabled === false) {
+    return (
+      <Card className="bg-slate-50/50">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Lock className="h-5 w-5 text-slate-400" />
+            <CardTitle className="text-lg text-slate-500">AI Features Disabled</CardTitle>
+          </div>
+          <CardDescription>
+            Enable AI in settings to get personalized financial advice
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/settings">Go to Settings</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (showQuestionForm) {
     return (

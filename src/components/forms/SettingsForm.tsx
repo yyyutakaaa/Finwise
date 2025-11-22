@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -14,6 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SettingsForm() {
   const { user } = useAuth();
@@ -35,14 +44,77 @@ export default function SettingsForm() {
     confirmPassword: "",
   });
 
+  // AI Settings
+  const [aiOptIn, setAiOptIn] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+
+  const fetchAiSettings = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_settings')
+      .select('ai_opt_in')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      setAiOptIn(data.ai_opt_in);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       setProfileData({
         fullName: user.user_metadata?.full_name || "",
         email: user.email || "",
       });
+      fetchAiSettings();
     }
-  }, [user]);
+  }, [user, fetchAiSettings]);
+
+  const handleAiToggle = async (checked: boolean) => {
+    if (checked) {
+      // Show confirmation dialog if turning ON
+      setIsAiDialogOpen(true);
+    } else {
+      // Turn OFF immediately
+      updateAiSettings(false);
+    }
+  };
+
+  const confirmAiEnable = async () => {
+    await updateAiSettings(true);
+    setIsAiDialogOpen(false);
+  };
+
+  const updateAiSettings = async (enabled: boolean) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          ai_opt_in: enabled,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setAiOptIn(enabled);
+      setMessage({
+        type: 'success',
+        text: `AI features ${enabled ? 'enabled' : 'disabled'} successfully.`
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      setMessage({ type: 'error', text: errorMessage });
+      // Revert switch if update failed
+      setAiOptIn(!enabled);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +244,34 @@ export default function SettingsForm() {
           {message.text}
         </div>
       )}
+
+      {/* AI Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Features</CardTitle>
+          <CardDescription>
+            Manage your AI settings and data privacy
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between space-x-2">
+            <div className="flex flex-col space-y-1">
+              <Label htmlFor="ai-mode" className="text-base font-medium">
+                Enable AI Features
+              </Label>
+              <span className="text-sm text-muted-foreground">
+                Allow the app to send anonymized data to OpenAI for financial advice.
+              </span>
+            </div>
+            <Switch
+              id="ai-mode"
+              checked={aiOptIn}
+              onCheckedChange={handleAiToggle}
+              disabled={loading}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Profile Settings */}
       <Card>
@@ -311,6 +411,26 @@ export default function SettingsForm() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Confirmation Dialog */}
+      <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enable AI Features?</DialogTitle>
+            <DialogDescription>
+              Let op: Door dit aan te zetten, geef je toestemming om geanonimiseerde financiële data naar OpenAI te sturen voor advies. Wil je doorgaan?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAiDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmAiEnable}>
+              Bevestigen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
