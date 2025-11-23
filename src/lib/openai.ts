@@ -1,10 +1,8 @@
 import OpenAI from 'openai'
 
-const apiKey = process.env.OPENAI_API_KEY;
-
-// Initialize OpenAI client only if API key is available
-// This prevents the app from crashing at startup if the key is missing
-const openai = apiKey ? new OpenAI({ apiKey }) : null;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+})
 
 export interface FinancialData {
   cashBalance: number
@@ -37,18 +35,13 @@ PROVIDE:
 
 Keep it friendly, concise (under 150 words), and encouraging. Use euros (€) for all amounts.`
 
-  if (!openai) {
-    console.error("OpenAI API key is missing.");
-    return "AI advice is currently unavailable. Please check the system configuration.";
-  }
-
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are Finwise AI, a friendly and knowledgeable personal finance advisor. Always be encouraging and provide practical advice. IMPORTANT: Always respond in English, regardless of the user's input language or location."
+          content: "You are Finwise AI, a friendly and knowledgeable personal finance advisor. Always be encouraging and provide practical advice."
         },
         {
           role: "user",
@@ -77,18 +70,13 @@ Their financial context:
 
 Provide a helpful, specific answer based on their financial situation. Be concise (under 100 words) and practical.`
 
-  if (!openai) {
-    console.error("OpenAI API key is missing.");
-    return "AI service is currently unavailable.";
-  }
-
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are Finwise AI, a helpful personal finance advisor. Give practical, specific advice based on the user's actual financial data. IMPORTANT: Always respond in English."
+          content: "You are Finwise AI, a helpful personal finance advisor. Give practical, specific advice based on the user's actual financial data."
         },
         {
           role: "user",

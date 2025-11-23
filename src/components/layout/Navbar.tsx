@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Settings } from 'lucide-react'
 import { signOut } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -39,15 +38,13 @@ export default function Navbar() {
             {user && (
               <>
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
+                  <Button variant="ghost" size="sm">
+                    📊 Dashboard
                   </Button>
                 </Link>
                 <Link href="/settings">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Settings className="h-4 w-4" />
-                    Settings
+                  <Button variant="ghost" size="sm">
+                    ⚙️ Settings
                   </Button>
                 </Link>
               </>

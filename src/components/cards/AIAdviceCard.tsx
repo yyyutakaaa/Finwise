@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getExpenses } from "@/lib/expense-helpers";
 import {
@@ -193,9 +192,7 @@ export default function AIAdviceCard() {
             <div className="text-sm text-slate-700 leading-relaxed">
               {advice || (
                 <div className="text-center py-6 text-slate-500">
-                  <div className="mb-2 flex justify-center">
-                    <Sparkles className="h-8 w-8 text-slate-400" />
-                  </div>
+                  <div className="mb-2">💡</div>
                   <div>Ready to analyze your finances!</div>
                   <div className="text-xs mt-1">
                     Click &quot;Get Analysis&quot; to receive personalized AI advice
